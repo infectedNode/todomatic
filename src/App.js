@@ -7,7 +7,22 @@ import Todo from "./components/Todo";
 
 function App(props) {
 
+  const filters = ["ALL", "ACTIVE", "COMPLETED"];
+
   const [tasks, setTasks] = useState(props.tasks);
+  const [activeFilter, setFilter] = useState("ALL");
+
+  const changeFilter = (filter) => {
+    setFilter(filter);
+  }
+
+  const filterList = filters?.map(filterName => (
+    <FilterButton 
+      filter={filterName} 
+      changeFilter={changeFilter}
+      isPressed={filterName === activeFilter}
+    />
+  ));
 
   const addTask = (name) => {
     const newTask = { id: "todo-" + nanoid(), name, completed: false};
@@ -27,9 +42,29 @@ function App(props) {
   const deleteTask = (id) => {
     const remainingTasks = tasks.filter(task => id !== task.id);
     setTasks(remainingTasks);
-  }  
+  } 
 
-  const taskList = tasks?.map(task => (
+  const editTaskName = (id, newName) => {
+    const updatedTasks = tasks.map(task => {
+      if(id === task.id) {
+        return {...task, name: newName};
+      }
+      return task;
+    });
+    setTasks(updatedTasks);
+  } 
+
+  const taskList = tasks
+    .filter(task => {
+      if(activeFilter == "ALL") {
+        return true;
+      } else if(activeFilter == "ACTIVE") {
+        return !task.completed;
+      } else {
+        return task.completed;
+      }
+    })
+    .map(task => (
     <Todo
         id={task.id}
         name={task.name}
@@ -37,6 +72,7 @@ function App(props) {
         key={task.id}
         toggleTaskCompleted={toggleTaskCompleted}
         deleteTask={deleteTask}
+        editTaskName={editTaskName}
       />
     )
   );
@@ -48,9 +84,7 @@ function App(props) {
       <h1>TodoMatic</h1>
       <Form addTask={addTask} />
       <div className="filters btn-group stack-exception">
-        <FilterButton />
-        <FilterButton />
-        <FilterButton />
+        {filterList}
       </div>
       <h2 id="list-heading">{headingText}</h2>
       <ul
